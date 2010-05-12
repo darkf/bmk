@@ -14,14 +14,14 @@ tok_keyword, tok_colon, tok_task, tok_platform, tok_string, tok_newline = range(
 tok_names = ["tok_keyword", "tok_colon", "tok_task", "tok_platform", "tok_string", "tok_newline"]
 
 scan = scanner.Scanner(True)
-scan.addRule(r" |\t", lambda v,a: None)
-scan.addRule(r"\n", tok_newline)
-scan.addRule(r"[a-zA-Z-._0-9]+", lambda v,a: SAVE_TOKEN(v, tok_keyword))
+scan.addRule(r" |\t", lambda v: None)
+scan.addRule(r"\n|\r", tok_newline)
+scan.addRule(r"[a-zA-Z-._0-9]+", lambda v: SAVE_TOKEN(v(0), tok_keyword))
 scan.addRule(r":", tok_colon)
-scan.addRule(r"\(([a-zA-Z-_.0-9]+)\)", lambda v,a: SAVE_TOKEN(a(1), tok_task))
-scan.addRule(r"\[([a-zA-Z-_.0-9]+)\]", lambda v,a: SAVE_TOKEN(a(1), tok_platform))
-scan.addRule(r"/\*.*\*/", lambda v,a: None)
-scan.addRule(r"\"(.*)\"", lambda v,a: SAVE_TOKEN(a(1), tok_string))
+scan.addRule(r"\(([a-zA-Z-_.0-9]+)\)", lambda v: SAVE_TOKEN(v(1), tok_task))
+scan.addRule(r"\[([a-zA-Z-_.0-9]+)\]", lambda v: SAVE_TOKEN(v(1), tok_platform))
+scan.addRule(r"/\*.*\*/", lambda v: None)
+scan.addRule(r"\"(.*)\"", lambda v: SAVE_TOKEN(v(1), tok_string))
 
 class Expected(Exception):
   def __init__(self, expected): self.expected = expected
@@ -110,7 +110,6 @@ def bmk_parse(text):
       if t is tok_task:
         # task (build target)
         name = tokstr
-        #print "{%s}" % name
         tasks[name] = parse_task()
       
     except StopIteration:
@@ -118,81 +117,3 @@ def bmk_parse(text):
       break
       
   return {"tasks": tasks}
-  
-"""
-def parse_task():
-  platforms = {"none": {}, "win32": {}, "posix": {}}
-  platform = "none"
-  taskname = tokstr
-
-  print "[%s]" % taskname
-  
-  try:
-    while True:
-      if scan.peek() is tok_task:
-        break
-      
-      t = scan.getToken()
-      
-      print "t:", tok_names[t]
-      
-      if t is tok_keyword:
-        name = tokstr
-        x = scan.getToken()
-        print "tok:", tok_names[x]
-        while True:
-          if x is tok_newline: x = scan.getToken()
-          else: break
-        
-        if (x is tok_keyword or x is tok_string) and (name in bmkcommands):
-          if name == "exec":
-            print "  exec:", tokstr
-            continue
-        
-        if x is not tok_colon:
-          print "error: expected ':'"
-          print "but got %s (%s)" % (tok_names[x], tokstr)
-          print "name = %s | t = %s" % (name, tok_names[t])
-          raise Expected(':')
-        
-        vals = parse_values()
-        platforms[platform][name] = vals
-        #print " ", platform, ":", name, "=", vals
-        print "  %s:%s =" % (platform, name), vals
-      
-      elif t is tok_platform:
-        name = tokstr
-        #print "  platform:", name
-        if not name in platforms.keys():
-          print "Unknown platform '%s'" % name
-          raise ValueError
-        
-        platform = name
-        
-  finally:
-    print "[/%s]" % taskname
-    print ""
-    return platforms
-    
-def bmk_parse(text):
-  scan.setText(text)
-  tasks = {}
-  
-  while True:
-    try:
-      # get the first task
-      t = scan.getToken()
-      
-      if t is tok_task:
-        # task (build target)
-        name = tokstr
-        #print "{%s}" % name
-        tasks[name] = parse_task()
-      
-    except StopIteration:
-      print "end"
-      break
-      
-  #print "tasks:", tasks 
-  return {"tasks": tasks}
-"""
