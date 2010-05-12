@@ -14,13 +14,13 @@ tok_keyword, tok_colon, tok_task, tok_platform, tok_string, tok_newline = range(
 tok_names = ["tok_keyword", "tok_colon", "tok_task", "tok_platform", "tok_string", "tok_newline"]
 
 scan = scanner.Scanner(True)
-scan.addRule(r" |\t", lambda v: None)
-scan.addRule(r"\n|\r", tok_newline)
+scan.addRule(r" |\t", lambda v: SAVE_TOKEN("", None))
+scan.addRule(r"\n|\r", lambda v: SAVE_TOKEN("", tok_newline))
 scan.addRule(r"[a-zA-Z-._0-9]+", lambda v: SAVE_TOKEN(v(0), tok_keyword))
-scan.addRule(r":", tok_colon)
+scan.addRule(r":", lambda v: SAVE_TOKEN("", tok_colon))
 scan.addRule(r"\(([a-zA-Z-_.0-9]+)\)", lambda v: SAVE_TOKEN(v(1), tok_task))
 scan.addRule(r"\[([a-zA-Z-_.0-9]+)\]", lambda v: SAVE_TOKEN(v(1), tok_platform))
-scan.addRule(r"/\*.*\*/", lambda v: None)
+scan.addRule(r"/\*.*\*/", lambda v: SAVE_TOKEN("", None))
 scan.addRule(r"\"(.*)\"", lambda v: SAVE_TOKEN(v(1), tok_string))
 
 class Expected(Exception):
@@ -71,8 +71,10 @@ def parse_task():
       # keyword ':'
       name = tokstr
       print "  eating:", tok_names[scan.getToken()] # eat :
-      print "_PEEK_:", tok_names[scan.peek()]
-      print "_CONSUME_:", tok_names[scan.getToken()]
+      p = scan.peek()
+      print "_PEEK_:", tok_names[p], "(%s)" % tokstr
+      p = scan.getToken()
+      print "_CONSUME_:", tok_names[p], "(%s)" % tokstr
       vals = parse_values()
       print "_PEEK2_", tok_names[scan.peek()]
       print "_CONSUME2_", tok_names[scan.getToken()]
