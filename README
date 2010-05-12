@@ -1,1 +1,5 @@
 b make system - a simple build system intended for C/C++ projects
+
+TODO
+get parser working
+everything else
