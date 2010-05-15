@@ -83,47 +83,51 @@ def parse_task():
   # read the task body
   
   while True:
-    if peektok() is tok_task:
-      # another task - just ignore it and return, the parser will pick it up later
+    try:
+      if peektok() is tok_task:
+        # another task - just ignore it and return, the parser will pick it up later
+        break
+      
+      t = gettok()
+    
+      #if t is not tok_newline:
+      #  print "  t: %s [%s]" % (tok_names[t], tokstr)
+    
+      name = tokstr
+      if t is tok_keyword and peektok() is tok_colon:
+        # keyword ':'
+        gettok() # eat :
+
+        vals = parse_values()
+        platforms[platform][name] = vals
+        print "  %s:%s =" % (platform,name), vals
+        continue
+      
+      elif t is tok_platform:
+        # switch platform
+        platform = tokstr
+        print "  switched to platform '%s'" % platform
+      
+      elif t is tok_keyword and tokstr in bmkcommands:
+        # command
+        if tokstr == "exec":
+          gettok() # get string
+          print "exec:", tokstr
+          continue
+        
+      elif t is tok_newline:
+        #print "  inl"
+        #continue # ignore newlines
+        pass
+        
+      else:
+        print "  unknown task-body token: %s [%s]" % (tok_names[t], tokstr)
+        
+    except StopIteration:
       break
       
-    t = gettok()
-    
-    #if t is not tok_newline:
-    #  print "  t: %s [%s]" % (tok_names[t], tokstr)
-    
-    name = tokstr
-    if t is tok_keyword and peektok() is tok_colon:
-      # keyword ':'
-      gettok() # eat :
-
-      vals = parse_values()
-      platforms[platform][name] = vals
-      print "  %s:%s =" % (platform,name), vals
-      continue
-      
-    elif t is tok_platform:
-      # switch platform
-      platform = tokstr
-      print "  switched to platform '%s'" % platform
-      
-    elif t is tok_keyword and tokstr in bmkcommands:
-      # command
-      if tokstr == "exec":
-        gettok() # get string
-        print "exec:", tokstr
-        continue
-        
-    elif t is tok_newline:
-      #print "  inl"
-      #continue # ignore newlines
-      pass
-        
-    else:
-      print "  unknown task-body token: %s [%s]" % (tok_names[t], tokstr)
-      
   print "[/%s]\n" % taskname
-      
+  
   return platforms
   
 def bmk_parse(text):
