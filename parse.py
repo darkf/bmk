@@ -3,12 +3,8 @@
 import scanner
 
 tokstr = ""
-#curtok = None
 
 def SAVE_TOKEN(v, t):
-  #global tokstr
-  #tokstr = v
-  #return t
   return (t, v)
   
 tok_keyword, tok_colon, tok_task, tok_platform, tok_string, tok_newline = range(6)
@@ -32,23 +28,18 @@ bmkcommands = ["exec"]
 _tokens = []
 _tokpos = 0
   
-def peektok(pos = None):
+def peektok():
   global _tokpos, _tokens, tokstr
-  if pos is None:
-    pos = _tokpos
   
-  if pos >= len(_tokens):
+  if _tokpos >= len(_tokens):
     raise StopIteration
     
-  t = _tokens[pos]
+  t = _tokens[_tokpos]
   
   if t[0] is None:
     # ignore None tokens, just skip onto the next one
-    #print "{was none}"
     _tokpos += 1
-    x = peektok(pos+1)
-    #print "PT: %s [%s]" % (tok_names[x], tokstr)
-    return x
+    return peektok()
   
   tokstr = t[1]
   return t[0]
@@ -66,7 +57,6 @@ def parse_values():
     k = peektok()
 
     if (k is tok_keyword) or (k is tok_string) or (k is tok_task):
-      #print "vate:", tok_names[gettok()] # eat it
       gettok() # eat it
       #print "  vtok:", tok_names[k], "(%s)" % tokstr
       vals.append(tokstr)
@@ -105,13 +95,8 @@ def parse_task():
     name = tokstr
     if t is tok_keyword and peektok() is tok_colon:
       # keyword ':'
-      #print "  eating:", tok_names[gettok()] # eat :
       gettok() # eat :
-      
-      #print "<<%s>>" % name
-      
-      #p = peektok()
-      #p = gettok()
+
       vals = parse_values()
       platforms[platform][name] = vals
       print "  %s:%s =" % (platform,name), vals
@@ -147,26 +132,6 @@ def bmk_parse(text):
   _tokens = [x for x in scan]
   _tokens.append((tok_newline, "")) # fixes a bug if there isn't a newline
   tasks = {}
-  
-  #print _tokens
-  #print ""
-  
-  """
-  while True:
-    try:
-      t = peektok()
-      print "%s [%s]" % (tok_names[t], tokstr)
-      
-      t = gettok()
-    except StopIteration:
-      break
-      
-    print "%s [%s]" % (tok_names[t], tokstr)
-    print ""
-    #print _tokpos
-    
-  return {"tasks": {}}
-  """
   
   while True:
     try:
