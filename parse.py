@@ -108,11 +108,11 @@ def parse_task():
         platform = tokstr
         print "  switched to platform '%s'" % platform
       
-      elif t is tok_keyword and tokstr in bmkcommands:
+      elif t is tok_keyword and name in bmkcommands:
         # command
-        if tokstr == "exec":
+        if name == "exec":
           gettok() # get string
-          print "exec:", tokstr
+          print "  exec:", tokstr
           continue
         
       elif t is tok_newline:
@@ -136,6 +136,7 @@ def bmk_parse(text):
   _tokens = [x for x in scan]
   _tokens.append((tok_newline, "")) # fixes a bug if there isn't a newline
   tasks = {}
+  #print "\n".join(["%s [%s]" % (tok_names[x[0]], x[1]) for x in _tokens if x[0] is not None])
   
   while True:
     try:
