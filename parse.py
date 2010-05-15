@@ -3,19 +3,20 @@
 import scanner
 
 tokstr = ""
-curtok = None
+#curtok = None
 
 def SAVE_TOKEN(v, t):
-  global tokstr
-  tokstr = v
-  return t
+  #global tokstr
+  #tokstr = v
+  #return t
+  return (t, v)
   
 tok_keyword, tok_colon, tok_task, tok_platform, tok_string, tok_newline = range(6)
 tok_names = ["tok_keyword", "tok_colon", "tok_task", "tok_platform", "tok_string", "tok_newline"]
 
 scan = scanner.Scanner(True)
-scan.addRule(r" |\t", lambda v: SAVE_TOKEN("", None))
-scan.addRule(r"\n|\r", lambda v: SAVE_TOKEN("", tok_newline))
+scan.addRule(r"[ \t]", lambda v: SAVE_TOKEN("", None))
+scan.addRule(r"[\n\r]", lambda v: SAVE_TOKEN("", tok_newline))
 scan.addRule(r"[a-zA-Z-._0-9]+", lambda v: SAVE_TOKEN(v(0), tok_keyword))
 scan.addRule(r":", lambda v: SAVE_TOKEN("", tok_colon))
 scan.addRule(r"\(([a-zA-Z-_.0-9]+)\)", lambda v: SAVE_TOKEN(v(1), tok_task))
@@ -28,23 +29,56 @@ class Expected(Exception):
   def __str__(self): return "Expected '%s'" % self.expected
 
 bmkcommands = ["exec"]
+_tokens = []
+_tokpos = 0
+  
+def peektok(pos = None):
+  global _tokpos, _tokens, tokstr
+  if pos is None:
+    pos = _tokpos
+  
+  if pos >= len(_tokens):
+    raise StopIteration
+    
+  t = _tokens[pos]
+  
+  if t[0] is None:
+    # ignore None tokens, just skip onto the next one
+    #print "{was none}"
+    _tokpos += 1
+    x = peektok(pos+1)
+    #print "PT: %s [%s]" % (tok_names[x], tokstr)
+    return x
+  
+  tokstr = t[1]
+  return t[0]
+  
+def gettok():
+  global _tokpos
+  t = peektok()
+  _tokpos += 1
+  return t
   
 def parse_values():
   # get values until newline
   vals = []
   while True:
-    k = scan.peek()
+    k = peektok()
 
     if (k is tok_keyword) or (k is tok_string) or (k is tok_task):
-      print "vate:", tok_names[scan.getToken()] # eat it
-      print "  vtok:", tok_names[k], "(%s)" % tokstr
+      #print "vate:", tok_names[gettok()] # eat it
+      gettok() # eat it
+      #print "  vtok:", tok_names[k], "(%s)" % tokstr
       vals.append(tokstr)
+    elif k is tok_newline:
+      #print "  vnl! [2]"
+      break
     else:
       print "  unexpected value (%s)" % tok_names[k]
       break
       
-    if scan.peek() is tok_newline:
-      print "  vnl!"
+    if peektok() is tok_newline:
+      #print "  vnl!"
       break
       
   return vals
@@ -59,55 +93,85 @@ def parse_task():
   # read the task body
   
   while True:
-    if scan.peek() is tok_task:
+    if peektok() is tok_task:
       # another task - just ignore it and return, the parser will pick it up later
       break
       
-    t = scan.getToken()
+    t = gettok()
     
-    print "  t:", tok_names[t], "(%s)" % tokstr
+    #if t is not tok_newline:
+    #  print "  t: %s [%s]" % (tok_names[t], tokstr)
     
-    if t is tok_keyword and scan.peek() is tok_colon:
+    name = tokstr
+    if t is tok_keyword and peektok() is tok_colon:
       # keyword ':'
-      name = tokstr
-      print "  eating:", tok_names[scan.getToken()] # eat :
-      p = scan.peek()
-      print "_PEEK_:", tok_names[p], "(%s)" % tokstr
-      p = scan.getToken()
-      print "_CONSUME_:", tok_names[p], "(%s)" % tokstr
+      #print "  eating:", tok_names[gettok()] # eat :
+      gettok() # eat :
+      
+      #print "<<%s>>" % name
+      
+      #p = peektok()
+      #p = gettok()
       vals = parse_values()
-      print "_PEEK2_", tok_names[scan.peek()]
-      print "_CONSUME2_", tok_names[scan.getToken()]
       platforms[platform][name] = vals
       print "  %s:%s =" % (platform,name), vals
       continue
       
-    if t is tok_keyword and tokstr in bmkcommands:
+    elif t is tok_platform:
+      # switch platform
+      platform = tokstr
+      print "  switched to platform '%s'" % platform
+      
+    elif t is tok_keyword and tokstr in bmkcommands:
       # command
       if tokstr == "exec":
-        scan.getToken() # get string
+        gettok() # get string
         print "exec:", tokstr
         continue
         
-    if t is tok_newline:
-      print "  inl"
+    elif t is tok_newline:
+      #print "  inl"
       #continue # ignore newlines
+      pass
         
     else:
-      print "  unknown task-body token:", tok_names[t], "(%s)" % tokstr
+      print "  unknown task-body token: %s [%s]" % (tok_names[t], tokstr)
       
   print "[/%s]\n" % taskname
       
   return platforms
   
 def bmk_parse(text):
+  global _tokens
   scan.setText(text)
+  _tokens = [x for x in scan]
+  _tokens.append((tok_newline, "")) # fixes a bug if there isn't a newline
   tasks = {}
+  
+  #print _tokens
+  #print ""
+  
+  """
+  while True:
+    try:
+      t = peektok()
+      print "%s [%s]" % (tok_names[t], tokstr)
+      
+      t = gettok()
+    except StopIteration:
+      break
+      
+    print "%s [%s]" % (tok_names[t], tokstr)
+    print ""
+    #print _tokpos
+    
+  return {"tasks": {}}
+  """
   
   while True:
     try:
       # get the first task
-      t = scan.getToken()
+      t = gettok()
       
       if t is tok_task:
         # task (build target)

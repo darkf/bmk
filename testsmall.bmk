@@ -1,0 +1,21 @@
+(all)
+  /* build all */
+  build: main (stuff)
+
+(main)
+  /* build main */
+  depends: (opt)
+  libs: z foo
+  source: foo.cpp bar.cpp
+
+  [posix]
+  out: foo
+
+  [win32]
+  libs: ws2_32
+  out: foo.exe
+  source: foo_win32.cpp bar_win32.cpp
+
+(opt)
+  /* build optional stuff */
+  depends: (stuff)
