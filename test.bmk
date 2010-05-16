@@ -17,6 +17,9 @@
 
   [posix]
   out: foo
+  
+  [linux]
+  out: foolinux
 
   [win32]
   libs: ws2_32

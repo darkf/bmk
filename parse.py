@@ -3,6 +3,7 @@
 import scanner
 
 tokstr = ""
+bmkdebug = False
 
 def SAVE_TOKEN(v, t):
   return (t, v)
@@ -50,6 +51,10 @@ def gettok():
   _tokpos += 1
   return t
   
+def dlog(msg):
+  if bmkdebug:
+    print msg
+  
 def parse_values():
   # get values until newline
   vals = []
@@ -64,7 +69,7 @@ def parse_values():
       #print "  vnl! [2]"
       break
     else:
-      print "  unexpected value (%s)" % tok_names[k]
+      dlog("  unexpected value (%s)" % tok_names[k])
       break
       
     if peektok() is tok_newline:
@@ -74,11 +79,11 @@ def parse_values():
   return vals
   
 def parse_task():
-  platforms = {"none": {}, "win32": {}, "posix": {}}
+  platforms = {}
   platform = "none"
   taskname = tokstr
   
-  print "[%s]" % taskname
+  dlog("[%s]" % taskname)
   
   # read the task body
   
@@ -99,20 +104,22 @@ def parse_task():
         gettok() # eat :
 
         vals = parse_values()
+        if not platforms.has_key(platform):
+          platforms[platform] = {}
         platforms[platform][name] = vals
-        print "  %s:%s =" % (platform,name), vals
+        dlog("  %s:%s = %s" % (platform, name, repr(vals)))
         continue
       
       elif t is tok_platform:
         # switch platform
         platform = tokstr
-        print "  switched to platform '%s'" % platform
+        dlog("  switched to platform '%s'" % platform)
       
       elif t is tok_keyword and name in bmkcommands:
         # command
         if name == "exec":
           gettok() # get string
-          print "  exec:", tokstr
+          dlog("  exec: %s" % tokstr)
           continue
         
       elif t is tok_newline:
@@ -121,12 +128,12 @@ def parse_task():
         pass
         
       else:
-        print "  unknown task-body token: %s [%s]" % (tok_names[t], tokstr)
+        print "  warning: unknown task-body token: %s [%s]" % (tok_names[t], tokstr)
         
     except StopIteration:
       break
       
-  print "[/%s]\n" % taskname
+  dlog("[/%s]\n" % taskname)
   
   return platforms
   
@@ -149,7 +156,6 @@ def bmk_parse(text):
         tasks[name] = parse_task()
       
     except StopIteration:
-      print "end"
       break
       
   return {"tasks": tasks}
