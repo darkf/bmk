@@ -36,13 +36,35 @@ def get_platforms():
 
 print "platform:", get_platforms()
 
+def composite_platforms(platforms):
+  options = {}
+  p = get_platforms()
+  
+  for platform,opts in platforms.iteritems():
+    if platform != "none" and (not platform in p):
+      continue
+      
+    for k,v in opts.iteritems():
+      if options.has_key(k): # append to the already-existing option
+        options[k].extend(v)
+        continue
+      options[k] = v
+  
+  return options
+
 for task,platforms in tasks.iteritems():
   print "[%s]" % task
   
-  for platform,options in platforms.iteritems():
-    print "  platform:", platform
-    
-    for option,value in options.iteritems():
-      print "    %s: %s" % (option, value)
+  options = composite_platforms(platforms)
+  
+  for k,v in options.iteritems():
+    print "  %s -> %s" % (k, v)
+  
+  #for platform,options in platforms.iteritems():
+  #  print "  platform:", platform
+  #  
+  #  for option,value in options.iteritems():
+  #    print "    %s: %s" % (option, value)
   
   print "[/%s]" % task
+  print ""
