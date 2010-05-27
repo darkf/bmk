@@ -2,49 +2,19 @@
 # see accompanying LICENSE file
 import os, sys, re, parse, libutil
 from bmkcompilers import compilers
+from util import get_platforms
 
-f = open("test.bmk", "r")
-text = f.read()
-f.close()
-
-p = parse.bmk_parse(text)
-
-tasks = p["tasks"]
+tasks = {}
 built = []
 START_POINT = "start"
 COMPILER = "mingw"
+FILE = "build.bmk"
 
-# didn't say it had to be correct
-posix_platforms = "linux darwin freebsd hpux sunos cygwin"
-
-def get_platforms():
-  # returns a list based on the platform we're running on
-  # e.g. ["posix", "linux"], ["posix", "freebsd"], ["win32"] ...
-  p = sys.platform
-  
-  #print "p:", p
-  
-  if p == "win32":
-    return ["win32"]
-    
-  s = re.split('\d+$', p)[0]
-  if s in posix_platforms:
-    return ["posix", s]
-    
-  if os.name == "posix":
-    return ["posix", s]
-  
-  return [p]
-
-#print "\n\n\n\n"
-
-print "platform:", get_platforms()
-
-def composite_platforms(platforms):
+def composite_options(platformopts):
   options = {}
   p = get_platforms()
   
-  for platform,opts in platforms.iteritems():
+  for platform,opts in platformopts.iteritems():
     if platform != "none" and (not platform in p):
       continue
       
@@ -64,7 +34,7 @@ def composite_platforms(platforms):
     # which would force it to out: bar
       
     for k,v in opts.iteritems():
-      if options.has_key(k): # append to the already-existing option
+      if k in options: # append to the already-existing option
         options[k].extend(v)
         continue
       options[k] = v
@@ -82,15 +52,15 @@ def buildtask(task):
     print "skipping '%s' - already built" % task
     return
     
-  if not tasks.has_key(task):
+  if not task in tasks:
     print "skipping - unknown task '%s'" % task
     return
   
   for k,v in tasks[task].iteritems():
     if k == "depends":
-      for t in v:
-        print "building depend %s" % t
-        buildtask(t)
+      for d in v:
+        print "building depend %s" % d
+        buildtask(d)
     elif k == "libs":
       libs = v
     elif k == "source":
@@ -117,8 +87,8 @@ def buildtask(task):
   print ""
   
   c = compilers[COMPILER]() # new instance of compiler
-  [c.add_lib(x) for x in libs]
-  [c.add_source(x) for x in source]
+  for x in libs: c.add_lib(x)
+  for x in source: c.add_source(x)
   c.set_type(type)
   c.set_out(out)
   
@@ -134,32 +104,40 @@ def buildtask(task):
   if not c.build():
     # build failed
     print "build failed"
-    del c
     sys.exit(1)
-    
-  del c
   
   built.append(task)
   
-  
 def main():
-  global tasks, START_POINT
+  global tasks, START_POINT, FILE
   
   if len(sys.argv) > 1:
     START_POINT = sys.argv[1]
+    
+  print "platform:", get_platforms()
+    
+  try:
+    f = open(FILE, "r")
+    text = f.read()
+    f.close()
+  except:
+    print "error opening file %s" % FILE
+    sys.exit(1)
+
+  p = parse.bmk_parse(text)
+  tasks = p["tasks"]
   
   # composite them all
-  for k,platforms in tasks.iteritems():
-    tasks[k] = composite_platforms(platforms)
+  for k,platformopts in tasks.iteritems():
+    tasks[k] = composite_options(platformopts)
     
   print "building %s" % START_POINT
   
   # check for (start)
-  if tasks.has_key(START_POINT):
+  if START_POINT in tasks:
     buildtask(START_POINT)
   else:
-    print "error: no start task"
-    return
-    
+    print "error: no task '%s'" % START_POINT
+    sys.exit(2)
     
 if __name__ == '__main__': main()

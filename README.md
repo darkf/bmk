@@ -8,6 +8,8 @@ todo
 * add support for more compilers
 * get something building
 
+help is welcome ;)
+
 howto
 =================
 .bmk files have a simple, elegant synatx, designed to be easy-to-use.
@@ -30,3 +32,5 @@ howto
   [posix]
   source: foo_posix.cpp
 </pre>
+
+simply run "bmk" or "bmk task_you_want_to_run", it will execute, if found, a file called "build.bmk"
