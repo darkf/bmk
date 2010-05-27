@@ -8,23 +8,18 @@ class BMKC_MinGW(Compiler):
   bin = "gcc"
   
   def _gen_command(self):
+    if self.out[:4] != ".exe":
+      # we're on Windows (mingw), add an .exe
+      self.out += ".exe"
     cmd = self.bin
-    cmd += " "
-    cmd += " ".join(self.source)
-    cmd += " "
-    cmd += " ".join(self.objs)
-    cmd += " "
+    if len(self.source) > 0: cmd += " "; cmd += " ".join(self.source)
+    if len(self.objs) > 0:   cmd += " "; cmd += " ".join(self.objs)
     cmd += " -o " + self.out
-    cmd += " "
-    cmd += " " + self.optimization
-    cmd += " "
-    cmd += prefixargs("-I", self.include_dirs)
-    cmd += " "
-    cmd += prefixargs("-L", self.lib_dirs)
-    cmd += " "
-    cmd += prefixargs("-l", self.libs)
-    cmd += " "
-    cmd += self.flags
+    if self.optimization: cmd += " "; cmd += " " + self.optimization
+    if len(self.include_dirs) > 0:    cmd += " "; cmd += prefixargs("-I", self.include_dirs)
+    if len(self.lib_dirs) > 0:        cmd += " "; cmd += prefixargs("-L", self.lib_dirs)
+    if len(self.libs) > 0:            cmd += " "; cmd += prefixargs("-l", self.libs)
+    if self.flags:                    cmd += " "; cmd += self.flags
     
     return cmd
     
@@ -34,5 +29,8 @@ class BMKC_MinGW(Compiler):
     # run it
     r = bmk_exec(cmd)
     print "compiler returned:", r
+    
+    if r > 0:
+      return False
     return True
     

@@ -44,6 +44,7 @@ def composite_options(platformopts):
 def buildtask(task):
   libs     = []
   source   = []
+  objs     = []
   requires = []
   type     = ""
   out      = ""
@@ -71,12 +72,14 @@ def buildtask(task):
       type = v[0]
     elif k == "out":
       out = v[0]
+    elif k == "objs":
+      objs = v
     else:
       print "unknown option '%s'" % k
       
-  if len(source) == 0:
-    # no sources, skip it
-    return
+  #if len(source) == 0 and len(objs) == 0:
+  #  # no sources or object files, skip it
+  #  return
       
   print "<%s>" % task
   print "  libs:", libs
@@ -89,6 +92,7 @@ def buildtask(task):
   c = compilers[COMPILER]() # new instance of compiler
   for x in libs: c.add_lib(x)
   for x in source: c.add_source(x)
+  for x in objs: c.add_obj(x)
   c.set_type(type)
   c.set_out(out)
   
