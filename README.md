@@ -7,12 +7,13 @@ todo
 * make nice library-finding API
 * add support for more compilers
 * get something building
+* better readme and example code
 
 help is welcome ;)
 
 howto
 =================
-.bmk files have a simple, elegant synatx, designed to be easy-to-use.
+.bmk files have a simple, elegant synatx, designed to be easy to use.
 
 **Example**
 <pre>
@@ -33,4 +34,6 @@ howto
   source: foo_posix.cpp
 </pre>
 
-simply run "bmk" or "bmk task_you_want_to_run", it will execute, if found, a file called "build.bmk"
+usage
+===============
+execute bmk.py for the frontend, and see --help for usage

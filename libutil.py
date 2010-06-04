@@ -5,7 +5,10 @@
 
 import sys, os
 
-def find_lib(lib):
+def find_library(names, paths):
+  pass
+
+def find_package(lib):
   if lib == "python":
     if sys.platform == "win32":
       if os.path.exists("C:\\Python26\\libs\\libpython26.a"):

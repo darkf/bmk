@@ -1,6 +1,6 @@
 # License: zlib license
 # see accompanying LICENSE file
-import os, sys, re, parse, libutil
+import os, sys, optparse, parse, libutil
 from bmkcompilers import compilers
 from util import get_platforms
 
@@ -9,6 +9,7 @@ built = []
 START_POINT = "start"
 COMPILER = "mingw"
 FILE = "build.bmk"
+REBUILD = False
 
 def composite_options(platformopts):
   options = {}
@@ -17,21 +18,6 @@ def composite_options(platformopts):
   for platform,opts in platformopts.iteritems():
     if platform != "none" and (not platform in p):
       continue
-      
-    # problem: if you have, say,
-    # [posix]
-    # out: foo
-    # [linux]
-    # out: bar
-    #
-    # then composited it will be out: foo bar
-    # but which one do we choose? :)
-    #
-    # I could add some more syntax, such as:
-    # !out: bar
-    # or
-    # out!: bar
-    # which would force it to out: bar
       
     for k,v in opts.iteritems():
       if k in options: # append to the already-existing option
@@ -77,9 +63,9 @@ def buildtask(task):
     else:
       print "unknown option '%s'" % k
       
-  #if len(source) == 0 and len(objs) == 0:
-  #  # no sources or object files, skip it
-  #  return
+  if len(source) == 0 and len(objs) == 0:
+    # no sources or object files, skip it
+    return
       
   print "<%s>" % task
   print "  libs:", libs
@@ -90,20 +76,41 @@ def buildtask(task):
   print ""
   
   c = compilers[COMPILER]() # new instance of compiler
-  for x in libs: c.add_lib(x)
   for x in source: c.add_source(x)
+  for x in libs: c.add_lib(x)
   for x in objs: c.add_obj(x)
   c.set_type(type)
   c.set_out(out)
   
   for d in requires:
-    l = libutil.find_lib(d)
+    l = libutil.find_package(d)
     if l is None:
-      print "error: couldn't find required library '%s'" % d
+      print "error: couldn't find required package '%s'" % d
       return
     
     c.add_lib_dir(l[0])
     c.add_lib(l[1])
+  
+  c.prepare()
+  
+  touched = False
+  try: otime = os.path.getmtime(c.out)
+  except:
+    otime = None
+    touched = True
+  
+  for x in source:
+    if not os.path.exists(x):
+      print "error: source file '%s' not found" % x
+      sys.exit(4)
+
+    if not touched and not REBUILD and otime is not None:
+      if os.path.getmtime(x) > otime:
+        touched = True
+        
+  if not touched:
+    print "skipping '%s' - not modified" % task
+    return # don't need to rebuild
     
   if not c.build():
     # build failed
@@ -113,10 +120,21 @@ def buildtask(task):
   built.append(task)
   
 def main():
-  global tasks, START_POINT, FILE
+  global tasks, START_POINT, FILE, COMPILER, REBUILD
   
-  if len(sys.argv) > 1:
-    START_POINT = sys.argv[1]
+  opt = optparse.OptionParser()
+  opt.add_option("-f", "--in", dest="file", help="input .bmk file", metavar="FILE", default=FILE)
+  opt.add_option("-s", "--start", dest="startpoint", help="which task to start with", metavar="STARTPOINT", default=START_POINT)
+  opt.add_option("-c", "--compiler", dest="compiler", help="which compiler to use", metavar="COMPILER", default=COMPILER)
+  opt.add_option("-r", "--rebuild", dest="rebuild", help="rebuild project (skip checking of file dates)", action="store_true", metavar="REBUILD", default=REBUILD)
+  opt.add_option("", "--debug", help="turn debugging on", action="store_true", default=False, metavar="DEBUG")
+  
+  options, args = opt.parse_args()
+  
+  START_POINT = options.startpoint
+  FILE = options.file
+  COMPILER = options.compiler
+  REBUILD = options.rebuild
     
   print "platform:", get_platforms()
     

@@ -1,7 +1,7 @@
 # License: zlib license
 # see accompanying LICENSE file
 
-import sys, subprocess
+import sys, re, subprocess
   
 # didn't say it had to be correct
 posix_platforms = "linux darwin freebsd hpux sunos cygwin"
@@ -24,9 +24,13 @@ def get_platforms():
   return [p]
   
 def bmk_exec(args):
-  proc = subprocess.Popen(args)#, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-  return proc.wait()
-  #os.system(args)
+  try:
+    proc = subprocess.Popen(args)#, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    return proc.wait()
+    #os.system(args)
+  except Exception, e:
+    print "build failed:", e
+    sys.exit(3)
   
 def prefixargs(p, a):
   return " ".join([p + x for x in a])

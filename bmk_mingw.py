@@ -1,14 +1,17 @@
 # License: zlib license
 # see accompanying LICENSE file
 
-from compiler import Compiler
+from basecompiler import Compiler
 from util import bmk_exec, prefixargs
 
 class BMKC_MinGW(Compiler):
   bin = "gcc"
   
-  def _gen_command(self):
-    if self.out[:4] != ".exe":
+  def prepare(self):
+    self.gen_command()
+  
+  def gen_command(self):
+    if self.out[-4:] != ".exe":
       # we're on Windows (mingw), add an .exe
       self.out += ".exe"
     cmd = self.bin
@@ -24,7 +27,7 @@ class BMKC_MinGW(Compiler):
     return cmd
     
   def build(self):
-    cmd = self._gen_command()
+    cmd = self.gen_command()
     print "cmd:", cmd
     # run it
     r = bmk_exec(cmd)

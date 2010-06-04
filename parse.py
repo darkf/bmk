@@ -19,7 +19,7 @@ scan.addRule(r":", lambda v: SAVE_TOKEN("", tok_colon))
 scan.addRule(r"\(([a-zA-Z-_.0-9]+)\)", lambda v: SAVE_TOKEN(v(1), tok_task))
 scan.addRule(r"\[([a-zA-Z-_.0-9]+)\]", lambda v: SAVE_TOKEN(v(1), tok_platform))
 scan.addRule(r"/\*.*\*/", lambda v: SAVE_TOKEN("", None))
-scan.addRule(r"\"(.*)\"", lambda v: SAVE_TOKEN(v(1), tok_string))
+scan.addRule(r"\"(.*?)\"", lambda v: SAVE_TOKEN(v(1), tok_string))
 
 class Expected(Exception):
   def __init__(self, expected): self.expected = expected

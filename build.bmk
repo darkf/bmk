@@ -1,40 +1,7 @@
 (start)
   /* starting point */
   depends: main
-
-(main)
-  /* build main */
-  depends: (opt)
-  libs: z foo
-  source: foo.cpp bar.cpp
-  requires: python
-
-  /* by default it will only add .exe to win32 hosts */
-  /* so you could leave it out */
-  /* the default type is also executable */
-
-  type: executable
-
-  [posix]
-  out: foo
   
-  [linux]
-  out: foolinux
-
-  [win32]
-  libs: ws2_32
-  out: foo.exe
-  source: foo_win32.cpp
-
-(opt)
-  /* build optional stuff */
-  depends: (stuff)
-  source: baz.cpp
-  out: opt
-  exec "shell code here"
-
-(stuff)
-  /* build utils etc */
-  type: shared
-  source: bazazz.cpp
-  out: bazazz /* will be .so on posix, .dll on win32 */
+(main)
+  source: "test/c/test.c" "test/c/test2.c"
+  out: "test/c/bin/test"

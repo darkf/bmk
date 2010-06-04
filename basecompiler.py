@@ -25,4 +25,5 @@ class Compiler:
   def set_type(self, type): self.type = type
   def set_out(self, out): self.out = out
   
+  def prepare(self): pass
   def build(self): return False
