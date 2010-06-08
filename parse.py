@@ -26,30 +26,21 @@ class Expected(Exception):
   def __str__(self): return "Expected '%s'" % self.expected
 
 bmkcommands = ["exec"]
-_tokens = []
-_tokpos = 0
   
 def peektok():
-  global _tokpos, _tokens, tokstr
-  
-  if _tokpos >= len(_tokens):
-    raise StopIteration
-    
-  t = _tokens[_tokpos]
-  
-  if t[0] is None:
-    # ignore None tokens, just skip onto the next one
-    _tokpos += 1
-    return peektok()
+  global tokstr
+  t = scan.peek()
   
   tokstr = t[1]
   return t[0]
   
 def gettok():
-  global _tokpos
-  t = peektok()
-  _tokpos += 1
-  return t
+  global tokstr
+  t = scan.get()
+  
+  tokstr = t[1]
+  dlog("%s %s" % (tok_names[t[0]], repr(t[1])))
+  return t[0]
   
 def dlog(msg):
   if bmkdebug:
@@ -138,10 +129,9 @@ def parse_task():
   return platforms
   
 def bmk_parse(text):
-  global _tokens
   scan.setText(text)
-  _tokens = [x for x in scan]
-  _tokens.append((tok_newline, "")) # fixes a bug if there isn't a newline
+  scan.parse()
+  scan.tokens.append((tok_newline, "")) # fixes a bug if there isn't a newline
   tasks = {}
   #print "\n".join(["%s [%s]" % (tok_names[x[0]], x[1]) for x in _tokens if x[0] is not None])
   

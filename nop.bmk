@@ -1,0 +1,7 @@
+(start)
+  /* start */
+  depends: nop
+  
+(nop)
+  /* nop project */
+  foo: bar
